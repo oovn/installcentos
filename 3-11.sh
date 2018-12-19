@@ -9,7 +9,7 @@ export DOMAIN=${DOMAIN:="$(curl -s ipinfo.io/ip).nip.io"}
 export USERNAME=${USERNAME:="$(whoami)"}
 export PASSWORD=${PASSWORD:=password}
 export VERSION=${VERSION:="3.11"}
-export SCRIPT_REPO=${SCRIPT_REPO:="https://raw.githubusercontent.com/gshipley/installcentos/master"}
+export SCRIPT_REPO=${SCRIPT_REPO:="https://raw.githubusercontent.com/oovn/installcentos/master"}
 export IP=${IP:="$(ip route get 8.8.8.8 | awk '{print $NF; exit}')"}
 export API_PORT=${API_PORT:="8443"}
 
@@ -164,7 +164,7 @@ if [ "$PVS" = "true" ]; then
 
 	curl -o vol.yaml $SCRIPT_REPO/vol.yaml
 
-	for i in `seq 1 200`;
+	for i in `seq 10 99`;
 	do
 		DIRNAME="vol$i"
 		mkdir -p /mnt/data/$DIRNAME 
@@ -180,13 +180,13 @@ if [ "$PVS" = "true" ]; then
 fi
 
 echo "******"
-echo "* Your console is https://console.$DOMAIN:$API_PORT"
+echo "* Your console is https://ocp.$DOMAIN:$API_PORT"
 echo "* Your username is $USERNAME "
 echo "* Your password is $PASSWORD "
 echo "*"
 echo "* Login using:"
 echo "*"
-echo "$ oc login -u ${USERNAME} -p ${PASSWORD} https://console.$DOMAIN:$API_PORT/"
+echo "$ oc login -u ${USERNAME} -p ${PASSWORD} https://ocp.$DOMAIN:$API_PORT/"
 echo "******"
 
-oc login -u ${USERNAME} -p ${PASSWORD} https://console.$DOMAIN:$API_PORT/
+oc login -u ${USERNAME} -p ${PASSWORD} https://ocp.$DOMAIN:$API_PORT/

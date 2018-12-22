@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ## see: https://youtu.be/aqXSbDZggK4
-
+export SSL=${SSL:="true"}
 ## Default variables to use
 export INTERACTIVE=${INTERACTIVE:="true"}
 export PVS=${INTERACTIVE:="true"}
@@ -151,13 +151,11 @@ if [ ! -z "${HTTPS_PROXY:-${https_proxy:-${HTTP_PROXY:-${http_proxy}}}}" ]; then
 	echo "openshift_no_proxy=\"${__no_proxy}\"" >> inventory.ini
 fi
 # add ssl
-if [ ! -z "${MAIL:-${mail:-${MAIL:-${mail}}}}" ]; then
-echo "ko ssl"
-else
+if [ "$SSL" = "true" ]; then
 # Configure Let's Encrypt certificate
 certbot certonly --manual \
                  --preferred-challenges dns \
-                 --email $MAIL \
+                 --email hi@$DOMAIN \
                  --server https://acme-v02.api.letsencrypt.org/directory \
                  --agree-tos \
                  -d $DOMAIN \

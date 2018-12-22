@@ -164,12 +164,13 @@ certbot certonly --manual \
 	# Add Cron Task to renew certificate
 echo "@monthly  certbot renew --pre-hook=\"oc scale --replicas=0 dc router\" --post-hook=\"oc scale --replicas=1 dc router\"" > certbotcron
 crontab certbotcron
-rm certbotcron
+#rm -f certbotcron
 # edit inventory.ini
 	echo >> inventory.ini
 echo "openshift_master_overwrite_named_certificates=true" >> inventory.ini
 echo "openshift_master_named_certificates=[{'cafile':'/etc/letsencrypt/live/$DOMAIN/chain.pem','certfile':'/etc/letsencrypt/live/$DOMAIN/cert.pem','keyfile':'/etc/letsencrypt/live/$DOMAIN/privkey.pem','name':['${DOMAIN}']}]" >> inventory.ini
 echo "openshift_hosted_router_certificate={'cafile':'/etc/letsencrypt/live/$DOMAIN/chain.pem','certfile':'/etc/letsencrypt/live/$DOMAIN/cert.pem','keyfile':'/etc/letsencrypt/live/$DOMAIN/privkey.pem'}" >> inventory.ini
+
 fi
 
 mkdir -p /etc/origin/master/

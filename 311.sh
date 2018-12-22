@@ -69,7 +69,7 @@ yum install -y  wget git zile nano net-tools docker-1.13.1\
 				java-1.8.0-openjdk-headless "@Development Tools"
 
 #install epel
-yum -y install epel-release
+yum -y install epel-release crontab
 
 # Disable the EPEL repository globally so that is not accidentally used during later steps of the installation
 sed -i -e "s/^enabled=1/enabled=0/" /etc/yum.repos.d/epel.repo
@@ -81,7 +81,7 @@ if [ $? -eq 1 ]; then
 fi
 
 # install the packages for Ansible
-yum -y --enablerepo=epel install pyOpenSSL
+yum -y --enablerepo=epel install pyOpenSSL certbot
 
 curl -o ansible.rpm https://releases.ansible.com/ansible/rpm/release/epel-7-x86_64/ansible-2.7.5-1.el7.ans.noarch.rpm
 yum -y --enablerepo=epel install ansible.rpm
@@ -151,11 +151,27 @@ if [ ! -z "${HTTPS_PROXY:-${https_proxy:-${HTTP_PROXY:-${http_proxy}}}}" ]; then
 	echo "openshift_no_proxy=\"${__no_proxy}\"" >> inventory.ini
 fi
 # add ssl
-if [ ! -z "${SSL:-${ssl:-${SSL:-${ssl}}}}" ]; then
+if [ ! -z "${MAIL:-${mail:-${MAIL:-${mail}}}}" ]; then
+echo "ko ssl"
+else
+# Configure Let's Encrypt certificate
+certbot certonly --manual \
+                 --preferred-challenges dns \
+                 --email $MAIL \
+                 --server https://acme-v02.api.letsencrypt.org/directory \
+                 --agree-tos \
+                 -d $DOMAIN \
+                 -d *.$DOMAIN \
+		 
+	# Add Cron Task to renew certificate
+echo "@monthly  certbot renew --pre-hook=\"oc scale --replicas=0 dc router\" --post-hook=\"oc scale --replicas=1 dc router\"" > certbotcron
+crontab certbotcron
+rm certbotcron
+# edit inventory.ini
 	echo >> inventory.ini
-#openshift_master_overwrite_named_certificates=true
-#openshift_master_named_certificates=[{'cafile':'/root/$DOMAIN/ca.cer','certfile':'/root/$DOMAIN/$DOMAIN.cer','keyfile':'/root/$DOMAIN/$DOMAIN.key','name':['${DOMAIN}']}]
-#openshift_hosted_router_certificate={'cafile':'/root/$DOMAIN/ca.cer','certfile':'/root/$DOMAIN/$DOMAIN.cer','keyfile':'/root/$DOMAIN/$DOMAIN.key'}
+echo "openshift_master_overwrite_named_certificates=true" >> inventory.ini
+echo "openshift_master_named_certificates=[{'cafile':'/etc/letsencrypt/live/$DOMAIN/chain.pem','certfile':'/etc/letsencrypt/live/$DOMAIN/cert.pem','keyfile':'/etc/letsencrypt/live/$DOMAIN/privkey.pem','name':['${DOMAIN}']}]" >> inventory.ini
+echo "openshift_hosted_router_certificate={'cafile':'/etc/letsencrypt/live/$DOMAIN/chain.pem','certfile':'/etc/letsencrypt/live/$DOMAIN/cert.pem','keyfile':'/etc/letsencrypt/live/$DOMAIN/privkey.pem'}" >> inventory.ini
 fi
 
 mkdir -p /etc/origin/master/
